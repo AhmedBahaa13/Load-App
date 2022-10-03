@@ -17,4 +17,6 @@
     <string name="glide">Glide - Image Loading Library by BumpTech</string>
     <string name="loadapp">LoadApp - Current repository by Udacity</string>
     <string name="retrofit">Retrofit - Type-safe HTTP client for Kotlin and Java by Square,Inc</string>
+    <string name="download">Download</string>
+
 </resources>
