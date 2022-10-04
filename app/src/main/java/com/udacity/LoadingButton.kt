@@ -16,9 +16,6 @@ import kotlin.properties.Delegates
 class LoadingButton @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {  // Attrs
-    private var widthSize = 0
-    private var heightSize = 0
-    private var borderRadius = 20f
     private var buttonText: String = ""
     private var loadingText: String = ""
     private var displayedText: String = ""
@@ -26,6 +23,11 @@ class LoadingButton @JvmOverloads constructor(
     private var progressBar = 0f
     private var circleAngle = 0f
     private val rectangle = RectF()
+
+    private var widthSize = 0
+    private var heightSize = 0
+
+    private var borderRadius = 20f
     private val paintRectangle = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         isAntiAlias = true
     }
