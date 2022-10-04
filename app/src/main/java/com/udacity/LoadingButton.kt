@@ -77,18 +77,18 @@ class LoadingButton @JvmOverloads constructor(
     }
 
     private fun startProgressBarAnimation() {
-        circleAngle = 0f
         progressBar = 0f
-        valueAnimatorProgressBar = ValueAnimator.ofFloat(0f, widthSize.toFloat())
+        circleAngle = 0f
         valueAnimatorCircle = ValueAnimator.ofFloat(0f, 360f)
+        valueAnimatorProgressBar = ValueAnimator.ofFloat(0f, widthSize.toFloat())
         valueAnimatorProgressBar.apply {
-            repeatMode = ValueAnimator.RESTART
             duration = 2000
+            repeatMode = ValueAnimator.RESTART
+            start()
             addUpdateListener {
                 progressBar = it.animatedValue as Float
                 invalidate()
             }
-            start()
         }
         valueAnimatorCircle.apply {
             duration = 2000
