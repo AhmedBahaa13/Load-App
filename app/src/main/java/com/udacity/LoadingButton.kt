@@ -1,17 +1,16 @@
 package com.udacity
 
-import android.animation.AnimatorInflater
-import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
+import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.*
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.RectF
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
 import androidx.core.animation.doOnEnd
-import androidx.core.content.ContextCompat
 import androidx.core.content.withStyledAttributes
-import androidx.core.graphics.toRect
 import kotlin.properties.Delegates
 
 class LoadingButton @JvmOverloads constructor(
@@ -40,8 +39,8 @@ class LoadingButton @JvmOverloads constructor(
     private lateinit var valueAnimatorProgressBar: ValueAnimator
     private lateinit var valueAnimatorCircle: ValueAnimator
     private var buttonState: ButtonState by Delegates.observable<ButtonState>(ButtonState.Completed) { p, old, new ->
-        when(new){
-            ButtonState.Loading ->  {
+        when (new) {
+            ButtonState.Loading -> {
                 isClickable = false
                 displayedText = loadingText
                 startProgressBarAnimation()
@@ -58,20 +57,26 @@ class LoadingButton @JvmOverloads constructor(
 
 
     init {
-        context.withStyledAttributes(attrs, R.styleable.LoadingButton){
-            paintRectangle.color = getColor(R.styleable.LoadingButton_backgroundColor, Color.rgb(67, 182, 172))
+        context.withStyledAttributes(attrs, R.styleable.LoadingButton) {
+            paintRectangle.color =
+                getColor(R.styleable.LoadingButton_backgroundColor, Color.rgb(67, 182, 172))
+            paintCircle.color =
+                getColor(R.styleable.LoadingButton_circleColor, Color.rgb(255, 171, 64))
+            borderRadius = getFloat(R.styleable.LoadingButton_borderRadius, 20f)
+            buttonText = getString(R.styleable.LoadingButton_android_text)
+                ?: context.getString(R.string.download)
+            loadingText = getString(R.styleable.LoadingButton_loadingText)
+                ?: context.getString(R.string.button_loading)
             paintText.textSize = getFloat(R.styleable.LoadingButton_android_textSize, 50f)
             paintText.color = getColor(R.styleable.LoadingButton_color, Color.WHITE)
-            paintProgressBar.color = getColor(R.styleable.LoadingButton_progressBarColor, Color.rgb(0, 137, 123))
-            paintCircle.color = getColor(R.styleable.LoadingButton_circleColor, Color.rgb(255, 171, 64))
-            borderRadius = getFloat(R.styleable.LoadingButton_borderRadius, 20f)
-            buttonText = getString(R.styleable.LoadingButton_android_text) ?: context.getString(R.string.download)
-            loadingText = getString(R.styleable.LoadingButton_loadingText) ?: context.getString(R.string.button_loading)
+            paintProgressBar.color =
+                getColor(R.styleable.LoadingButton_progressBarColor, Color.rgb(0, 137, 123))
+
         }
-        setButtonState(ButtonState.Completed)
+        setState(ButtonState.Completed)
     }
 
-    private fun startProgressBarAnimation(){
+    private fun startProgressBarAnimation() {
         circleAngle = 0f
         progressBar = 0f
         valueAnimatorProgressBar = ValueAnimator.ofFloat(0f, widthSize.toFloat())
@@ -93,28 +98,32 @@ class LoadingButton @JvmOverloads constructor(
             }
 
             doOnEnd {
-                setButtonState(ButtonState.Completed)
+                setState(ButtonState.Completed)
             }
             start()
         }
     }
 
+    @SuppressLint("DrawAllocation")
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
         canvas?.let {
             canvas.drawRoundRect(rectangle, 25f, 25f, paintRectangle)
 
             if (buttonState == ButtonState.Loading) {
-                canvas.drawRoundRect(RectF(0f, 0f, progressBar, heightSize.toFloat()), 25f, 25f, paintProgressBar)
-                canvas.drawArc(((widthSize/4)*3-30).toFloat(),
-                    (heightSize/2-30).toFloat(),
-                    ((widthSize/4)*3+30).toFloat(),
-                    (heightSize/2+30).toFloat(), 0f, circleAngle, true, paintCircle)
+                val rectF = RectF(0f, 0f, progressBar, heightSize.toFloat())
+                canvas.drawRoundRect(rectF, 25f, 25f, paintProgressBar)
+                canvas.drawArc(
+                    ((widthSize / 4) * 3 - 30).toFloat(),
+                    (heightSize / 2 - 30).toFloat(),
+                    ((widthSize / 4) * 3 + 30).toFloat(),
+                    (heightSize / 2 + 30).toFloat(), 0f, circleAngle, true, paintCircle
+                )
             }
             canvas.drawText(
                 displayedText,
                 widthSize / 2f,
-                heightSize / 2f + paintText.textSize / 2f ,
+                heightSize / 2f + paintText.textSize / 2f,
                 paintText
             )
         }
@@ -135,11 +144,11 @@ class LoadingButton @JvmOverloads constructor(
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        rectangle.set(0f,0f, width.toFloat(), height.toFloat())
+        rectangle.set(0f, 0f, width.toFloat(), height.toFloat())
     }
 
     @JvmName("setButtonState1")
-    fun setButtonState(state: ButtonState){
+    fun setState(state: ButtonState) {
         buttonState = state
     }
 
