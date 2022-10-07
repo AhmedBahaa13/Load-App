@@ -52,6 +52,7 @@ class MainActivity : AppCompatActivity() {
             if (radioList.checkedRadioButtonId == -1)
             {
                 Toast.makeText(this, "Select a button", Toast.LENGTH_SHORT).show()
+                custom_button.setState(ButtonState.Completed)
             }
             else {
                 val index = radioList.indexOfChild(findViewById(radioList.checkedRadioButtonId))
@@ -90,6 +91,7 @@ class MainActivity : AppCompatActivity() {
                             } else {
                                 "Fail"
                             }
+                            custom_button.setState(ButtonState.Completed)
                         }
                     }
 
@@ -103,6 +105,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun download(url: String) {
+        custom_button.setState(ButtonState.Loading)
         val request =
             DownloadManager.Request(Uri.parse(url))
                 .setTitle(getString(R.string.app_name))
@@ -114,24 +117,6 @@ class MainActivity : AppCompatActivity() {
         val downloadManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
         downloadID =
             downloadManager.enqueue(request)// enqueue puts the download request in the queue.
-
-        //failed trial to check download status
-        //the following was implemented with the help of this link
-        //https://code.luasoftware.com/tutorials/android/android-download-file-with-downloadmanager-and-check-status/
-//        val cursor = downloadManager.query(DownloadManager.Query().setFilterById(downloadID))
-//        if (cursor.moveToFirst()){
-//            while(!cursor.isAfterLast){
-//                val status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))
-//                if (status == DownloadManager.STATUS_SUCCESSFUL){
-//                    downloadStatus = "Success"
-//                    break
-//                }else{
-//                    downloadStatus = "Fail"
-//                }
-//                Log.i("details",downloadStatus)
-//                cursor.moveToNext()
-//            }
-//        }
     }
 
     companion object {

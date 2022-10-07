@@ -9,47 +9,76 @@ import android.graphics.Paint
 import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
-import androidx.core.animation.doOnEnd
+import androidx.core.content.ContextCompat
 import androidx.core.content.withStyledAttributes
 import kotlin.properties.Delegates
 
 class LoadingButton @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {  // Attrs
+
     private var buttonText: String = ""
     private var loadingText: String = ""
     private var displayedText: String = ""
+    private var buttonBackgroundColor : Int
 
     private var progressBar = 0f
-    private var circleAngle = 0f
     private val rectangle = RectF()
+    private var progress: Float = 0f
+
 
     private var widthSize = 0
     private var heightSize = 0
 
     private var borderRadius = 20f
     private val paintRectangle = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        isAntiAlias = true
+        color = ContextCompat.getColor(context, R.color.colorPrimary)
     }
     private val paintText = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        isAntiAlias = true
+        style = Paint.Style.FILL
         textAlign = Paint.Align.CENTER
+        textSize = 45f
     }
-    private val paintProgressBar = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val paintCircle = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val paintProgressBar = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.YELLOW
+    }
+    private val paintProgressBarBackground = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = ContextCompat.getColor(context, R.color.colorPrimaryDark)
+    }
 
-    private lateinit var valueAnimatorProgressBar: ValueAnimator
-    private lateinit var valueAnimatorCircle: ValueAnimator
+    private var valueAnimator = ValueAnimator()
     private var buttonState: ButtonState by Delegates.observable<ButtonState>(ButtonState.Completed) { p, old, new ->
         when (new) {
             ButtonState.Loading -> {
                 isClickable = false
                 displayedText = loadingText
-                startProgressBarAnimation()
+                buttonBackgroundColor = Color.parseColor("#004349")
+                invalidate()
+                requestLayout()
+
+                valueAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
+                    addUpdateListener {
+                        progress = animatedValue as Float
+                        invalidate()
+                    }
+                    repeatMode = ValueAnimator.REVERSE
+                    repeatCount = ValueAnimator.INFINITE
+                    duration = 3000
+                    start()
+                }
+                this.isEnabled = false
             }
             ButtonState.Completed -> {
                 displayedText = buttonText
                 isClickable = true
+                buttonBackgroundColor = Color.parseColor("#07c2AA")
+                invalidate()
+                requestLayout()
+
+                valueAnimator.cancel()
+
+                progress = 0f
+                this.isEnabled = true
             }
             ButtonState.Clicked -> {
 
@@ -59,12 +88,11 @@ class LoadingButton @JvmOverloads constructor(
 
 
     init {
+       buttonBackgroundColor = ContextCompat.getColor(context, R.color.colorPrimary)
         context.withStyledAttributes(attrs, R.styleable.LoadingButton) {
             paintRectangle.color =
-                getColor(R.styleable.LoadingButton_backgroundColor, Color.rgb(67, 182, 172))
-            paintCircle.color =
-                getColor(R.styleable.LoadingButton_circleColor, Color.rgb(255, 171, 64))
-            borderRadius = getFloat(R.styleable.LoadingButton_borderRadius, 20f)
+                getColor(R.styleable.LoadingButton_backgroundColor, ContextCompat.getColor(context, R.color.colorPrimary))
+             borderRadius = getFloat(R.styleable.LoadingButton_borderRadius, 20f)
             buttonText = getString(R.styleable.LoadingButton_android_text)
                 ?: context.getString(R.string.download)
             loadingText = getString(R.styleable.LoadingButton_loadingText)
@@ -72,56 +100,55 @@ class LoadingButton @JvmOverloads constructor(
             paintText.textSize = getFloat(R.styleable.LoadingButton_android_textSize, 50f)
             paintText.color = getColor(R.styleable.LoadingButton_color, Color.WHITE)
             paintProgressBar.color =
-                getColor(R.styleable.LoadingButton_progressBarColor, Color.rgb(0, 137, 123))
+                getColor(R.styleable.LoadingButton_progressBarColor,Color.YELLOW)
 
         }
         setState(ButtonState.Completed)
     }
 
-    private fun startProgressBarAnimation() {
-        progressBar = 0f
-        circleAngle = 0f
-        valueAnimatorCircle = ValueAnimator.ofFloat(0f, 360f)
-        valueAnimatorProgressBar = ValueAnimator.ofFloat(0f, widthSize.toFloat())
-        valueAnimatorProgressBar.apply {
-            duration = 2000
-            repeatMode = ValueAnimator.RESTART
-            start()
-            addUpdateListener {
-                progressBar = it.animatedValue as Float
-                invalidate()
-            }
-        }
-        valueAnimatorCircle.apply {
-            duration = 2000
-            addUpdateListener {
-                circleAngle = it.animatedValue as Float
-                invalidate()
-            }
-
-            doOnEnd {
-                setState(ButtonState.Completed)
-            }
-            start()
-        }
-    }
-
     @SuppressLint("DrawAllocation")
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
-        canvas?.let {
-            canvas.drawRoundRect(rectangle, 25f, 25f, paintRectangle)
+        canvas?.apply {
+            val cornerRadius = 10.0f
+            drawColor(buttonBackgroundColor)
+            rectangle.set(0f, 0f, measuredWidth.toFloat(), measuredHeight.toFloat())
+            canvas.drawRoundRect(
+                rectangle,
+                cornerRadius,
+                cornerRadius,
+                paintRectangle
+            )
 
             if (buttonState == ButtonState.Loading) {
-                val rectF = RectF(0f, 0f, progressBar, heightSize.toFloat())
-                canvas.drawRoundRect(rectF, 25f, 25f, paintProgressBar)
+               var progressValue = progress * measuredWidth.toFloat()
+                val rectF = RectF(
+                    0f,
+                    0f,
+                    progressValue,
+                    measuredHeight.toFloat()
+                )
+                canvas.drawRoundRect(
+                    rectF,
+                    cornerRadius,
+                    cornerRadius,
+                    paintProgressBarBackground)
+                val diameter =cornerRadius * 2f
+                val arcRectSize = measuredHeight.toFloat() - paddingBottom.toFloat() - diameter
+
+                progressValue = progress * 360f
                 canvas.drawArc(
-                    ((widthSize / 4) * 3 - 30).toFloat(),
-                    (heightSize / 2 - 30).toFloat(),
-                    ((widthSize / 4) * 3 + 30).toFloat(),
-                    (heightSize / 2 + 30).toFloat(), 0f, circleAngle, true, paintCircle
+                    paddingStart + diameter,
+                    paddingTop.toFloat() + diameter,
+                    arcRectSize,
+                    arcRectSize,
+                    0f,
+                    progressValue,
+                    true,
+                    paintProgressBar
                 )
             }
+
             canvas.drawText(
                 displayedText,
                 widthSize / 2f,
@@ -135,7 +162,7 @@ class LoadingButton @JvmOverloads constructor(
         val minw: Int = paddingLeft + paddingRight + suggestedMinimumWidth
         val w: Int = resolveSizeAndState(minw, widthMeasureSpec, 1)
         val h: Int = resolveSizeAndState(
-            View.MeasureSpec.getSize(w),
+            MeasureSpec.getSize(w),
             heightMeasureSpec,
             0
         )
@@ -144,8 +171,11 @@ class LoadingButton @JvmOverloads constructor(
         setMeasuredDimension(w, h)
     }
 
+
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
+        widthSize = w
+        heightSize = h
         rectangle.set(0f, 0f, width.toFloat(), height.toFloat())
     }
 
